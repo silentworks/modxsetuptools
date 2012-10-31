@@ -17,6 +17,19 @@ set_time_limit(0);
 require_once dirname(__FILE__) . '/build.config.php';
 require_once dirname(__FILE__) . '/setup.class.php';
 include_once MODX_CORE_PATH . 'model/modx/modx.class.php';
+
+/* define package */
+define('PKG_NAME', 'Magazine');
+define('PKG_ABBR', strtolower(PKG_NAME));
+
+/* define sources */
+$root = dirname(dirname(__FILE__)).'/';
+$config = array(
+	'chunks' => $root . 'core/components/' . PKG_ABBR . '/elements/chunks/',
+	'snippets' => $root . 'core/components/' . PKG_ABBR . '/elements/snippets/',
+	'plugins' => $root . 'core/components/' . PKG_ABBR . '/elements/plugins/',
+);
+
 $modx = new modX();
 $modx->initialize('mgr');
 echo '<pre>'; /* used for nice formatting of log messages */
@@ -40,9 +53,9 @@ $menu = $setup->createMenu('magazine', 'magazine.menu_desc');
 $menu->addOne($action);
 $menu->save();
 
-$modx->log(modX::LOG_LEVEL_INFO, 'Created Namespace and Menu.');
+$setup->log('Created Namespace and Menu.');
 
-$modx->log(modX::LOG_LEVEL_INFO, 'Creating Settings...');
+$setup->log('Creating Settings...');
 /* Core and Assets Path */
 $setup->createSetting('core_path', '{base_path}magazine/core/components/magazine/');
 $setup->createSetting('assets_path', '{base_path}magazine/assets/components/magazine/');
@@ -50,8 +63,20 @@ $setup->createSetting('assets_path', '{base_path}magazine/assets/components/maga
 /* Assets URL */
 $setup->createSetting('assets_url', '{base_url}magazine/assets/components/magazine/');
 
-$modx->log(modX::LOG_LEVEL_INFO, 'Clearing Settings Cache...');
+// Chunk and Snippet Setup
+$setup->createChunk(array('CHNK_RowTpl' => ''))
+	->createSnippet(array('magList' => '', 'magCategory' => ''))
+	->createPlugin(array(
+		'MagTv' => array(
+			'desc' => 'Load up a list of Magazines for a TV',
+			'events' => array(
+				'OnTVInputRenderList',
+			),
+		),
+	));
+
+$setup->log('Clearing Settings Cache...');
 /* Clear the cache: */
 $cacheRefreshOptions =  array('system_settings' => array());
-$modx->cacheManager-> refresh($cacheRefreshOptions);
-$modx->log(modX::LOG_LEVEL_INFO, 'Settings Cache Cleared.');
+$modx->cacheManager->clean($cacheRefreshOptions);
+$setup->log('Settings Cache Cleared.');
