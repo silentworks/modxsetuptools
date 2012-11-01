@@ -1,0 +1,21 @@
+{
+    "name": "silentworks/modxsetuptools",
+    "type": "tools",
+    "description": "Tools to help with development of MODX extras",
+    "keywords": ["modx","tools"],
+    "homepage": "http://github.com/silentworks/modxsetuptools",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrew Smith",
+            "email": "a.smith@silentworks.co.uk",
+            "homepage": "http://www.silentworks.co.uk/"
+        }
+    ],
+    "require": {
+        "php": ">=5.2.0"
+    },
+    "autoload": {
+        "classmap": [""]
+    }
+}
