@@ -287,7 +287,7 @@ class Setup {
         if (is_array($templateVariable)) {
             foreach ($templateVariable as $k => $tv) {
                 $i++;
-                $filename = strtolower($key);
+                $filename = strtolower($k);
                 $file = $this->config['tvs'] . 'tv.' . $filename . '.php';
 
                 /* Count Item */
