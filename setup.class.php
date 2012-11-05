@@ -13,6 +13,7 @@ class Setup {
     protected $modx;
     protected $namespace;
     protected $config = array(
+        'tvs' => '',
         'chunks' => '',
         'plugins' => '',
         'snippets' => '',
@@ -231,6 +232,40 @@ class Setup {
 
                 $plugins[$i]->save();
                 unset($events);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @param array $chunk
+     * @return Setup
+     */
+    public function createTV(array $templateVariable)
+    {
+        $tvs = array();
+        $i = 0;
+
+        if (is_array($templateVariable)) {
+            foreach ($templateVariable as $key => $tv) {
+                $i++;
+                $filename = strtolower($key);
+                $file = $this->config['tvs'] . 'tv.' . $filename . '.php';
+                $tvs[$i] = $this->modx->newObject('modTemplateVar');
+                $tvs[$i]->fromArray(array(
+                    'type' => $tv['type'],
+                    'caption' => in_array('caption', $tv) ? $tv['caption'] : '',
+                    'name' => $key,
+                    'description' => in_array('desc', $tv) ? $tv['desc'] : '',
+                    'category' => in_array('category', $tv) ? $tv['category'] : 0,
+                    'locked' => in_array('locked', $tv) ? $tv['locked'] : 0,
+                    'elements' => in_array('elements', $tv) ? $tv['elements'] : NULL,
+                    'rank' => in_array('rank', $tv) ? $tv['rank'] : 0,
+                    'display' => in_array('display', $tv) ? $tv['display'] : 'default',
+                    'display_params' => in_array('display_params', $tv) ? $tv['display_params'] : NULL,
+                    'default_text' => in_array('default_text', $tv) ? $tv['default_text'] : NULL,
+                ), '', true, true);
+                $tvs[$i]->save();
             }
         }
         return $this;
