@@ -126,21 +126,29 @@ class Setup {
      */
     public function createMenu($text = '', $description = '', $parent = 'components', $save = false)
     {
-        $menu = $this->modx->newObject('modMenu');
-        $menu->fromArray(array(
-            'text' => $text,
-            'parent' => $parent,
-            'description' => $description,
-            'icon' => '',
-            'menuindex' => 0,
-            'params' => '',
-            'handler' => '',
-        ),'',true,true);
+        $cm = $this->modx->getCount('modMenu', array(
+            'text' => $text
+        ));
 
-        if ($save) {
-            $menu->save();
+        if (!empty($cm)) {
+            $this->log(sprintf('Menu already exist with the name %s', $text));
+        } else {
+            $menu = $this->modx->newObject('modMenu');
+            $menu->fromArray(array(
+                'text' => $text,
+                'parent' => $parent,
+                'description' => $description,
+                'icon' => '',
+                'menuindex' => 0,
+                'params' => '',
+                'handler' => '',
+            ),'',true,true);
+
+            if ($save) {
+                $menu->save();
+            }
+            return $menu;
         }
-        return $menu;
     }
 
     /**
@@ -157,13 +165,23 @@ class Setup {
                 $i++;
                 $filename = strtolower($sn);
                 $file = $this->config['snippets'] . 'snippet.' . $filename . '.php';
-                $snippets[$i] = $this->modx->newObject('modSnippet');
-                $snippets[$i]->fromArray(array(
-                    'name' => $sn,
-                    'description' => $desc,
-                    'snippet' => $this->getFileContent($file),
-                ), '', true, true);
-                $snippets[$i]->save();
+
+                /* Count Item */
+                $cnt = $this->modx->getCount('modSnippet', array(
+                    'name' => $sn
+                ));
+
+                if (!empty($cnt)) {
+                    $this->log(sprintf('Snippet already exist with the name %s', $sn));
+                } else {
+                    $snippets[$i] = $this->modx->newObject('modSnippet');
+                    $snippets[$i]->fromArray(array(
+                        'name' => $sn,
+                        'description' => $desc,
+                        'snippet' => $this->getFileContent($file),
+                    ), '', true, true);
+                    $snippets[$i]->save();
+                }
             }
         }
         return $this;
@@ -179,17 +197,27 @@ class Setup {
         $i = 0;
 
         if (is_array($chunk)) {
-            foreach ($chunk as $sn => $desc) {
+            foreach ($chunk as $ch => $desc) {
                 $i++;
-                $filename = strtolower($sn);
+                $filename = strtolower($ch);
                 $file = $this->config['chunks'] . $filename . '.chunk.tpl';
-                $chunks[$i] = $this->modx->newObject('modChunk');
-                $chunks[$i]->fromArray(array(
-                    'name' => $sn,
-                    'description' => $desc,
-                    'snippet' => $this->getFileContent($file, false),
-                ), '', true, true);
-                $chunks[$i]->save();
+
+                /* Count Item */
+                $cnt = $this->modx->getCount('modChunk', array(
+                    'name' => $ch
+                ));
+
+                if (!empty($cnt)) {
+                    $this->log(sprintf('Chunk already exist with the name %s', $ch));
+                } else {
+                    $chunks[$i] = $this->modx->newObject('modChunk');
+                    $chunks[$i]->fromArray(array(
+                        'name' => $ch,
+                        'description' => $desc,
+                        'snippet' => $this->getFileContent($file, false),
+                    ), '', true, true);
+                    $chunks[$i]->save();
+                }
             }
         }
         return $this;
@@ -209,29 +237,39 @@ class Setup {
                 $i++;
                 $filename = strtolower($k);
                 $file = $this->config['plugins'] . 'plugin.' . $filename . '.php';
-                $plugins[$i] = $this->modx->newObject('modPlugin');
-                $plugins[$i]->fromArray(array(
-                    'name' => $k,
-                    'description' => $pl['desc'],
-                    'plugincode' => $this->getFileContent($file),
-                ), '', true, true);
 
-                $events = array();
-                foreach ($pl['events'] as $event) {
-                    $events[$event] = $this->modx->newObject('modPluginEvent');
-                    $events[$event]->fromArray(array(
-                        'event' => $event,
-                        'priority' => 0,
-                        'propertyset' => 0,
+                /* Count Item */
+                $cnt = $this->modx->getCount('modPlugin', array(
+                    'name' => $k
+                ));
+
+                if (!empty($cnt)) {
+                    $this->log(sprintf('Plugin already exist with the name %s', $ch));
+                } else {
+                    $plugins[$i] = $this->modx->newObject('modPlugin');
+                    $plugins[$i]->fromArray(array(
+                        'name' => $k,
+                        'description' => $pl['desc'],
+                        'plugincode' => $this->getFileContent($file),
                     ), '', true, true);
-                }
 
-                if (! empty($events)) {
-                    $plugins[$i]->addMany($events);
-                }
+                    $events = array();
+                    foreach ($pl['events'] as $event) {
+                        $events[$event] = $this->modx->newObject('modPluginEvent');
+                        $events[$event]->fromArray(array(
+                            'event' => $event,
+                            'priority' => 0,
+                            'propertyset' => 0,
+                        ), '', true, true);
+                    }
 
-                $plugins[$i]->save();
-                unset($events);
+                    if (! empty($events)) {
+                        $plugins[$i]->addMany($events);
+                    }
+
+                    $plugins[$i]->save();
+                    unset($events);
+                }
             }
         }
         return $this;
@@ -247,25 +285,35 @@ class Setup {
         $i = 0;
 
         if (is_array($templateVariable)) {
-            foreach ($templateVariable as $key => $tv) {
+            foreach ($templateVariable as $k => $tv) {
                 $i++;
                 $filename = strtolower($key);
                 $file = $this->config['tvs'] . 'tv.' . $filename . '.php';
-                $tvs[$i] = $this->modx->newObject('modTemplateVar');
-                $tvs[$i]->fromArray(array(
-                    'type' => $tv['type'],
-                    'caption' => in_array('caption', $tv) ? $tv['caption'] : '',
-                    'name' => $key,
-                    'description' => in_array('desc', $tv) ? $tv['desc'] : '',
-                    'category' => in_array('category', $tv) ? $tv['category'] : 0,
-                    'locked' => in_array('locked', $tv) ? $tv['locked'] : 0,
-                    'elements' => in_array('elements', $tv) ? $tv['elements'] : NULL,
-                    'rank' => in_array('rank', $tv) ? $tv['rank'] : 0,
-                    'display' => in_array('display', $tv) ? $tv['display'] : 'default',
-                    'display_params' => in_array('display_params', $tv) ? $tv['display_params'] : NULL,
-                    'default_text' => in_array('default_text', $tv) ? $tv['default_text'] : NULL,
-                ), '', true, true);
-                $tvs[$i]->save();
+
+                /* Count Item */
+                $cnt = $this->modx->getCount('modTemplateVar', array(
+                    'name' => $k
+                ));
+
+                if (!empty($cnt)) {
+                    $this->log(sprintf('TV already exist with the name %s', $ch));
+                } else {
+                    $tvs[$i] = $this->modx->newObject('modTemplateVar');
+                    $tvs[$i]->fromArray(array(
+                        'type' => $tv['type'],
+                        'caption' => in_array('caption', $tv) ? $tv['caption'] : '',
+                        'name' => $k,
+                        'description' => in_array('desc', $tv) ? $tv['desc'] : '',
+                        'category' => in_array('category', $tv) ? $tv['category'] : 0,
+                        'locked' => in_array('locked', $tv) ? $tv['locked'] : 0,
+                        'elements' => in_array('elements', $tv) ? $tv['elements'] : NULL,
+                        'rank' => in_array('rank', $tv) ? $tv['rank'] : 0,
+                        'display' => in_array('display', $tv) ? $tv['display'] : 'default',
+                        'display_params' => in_array('display_params', $tv) ? $tv['display_params'] : NULL,
+                        'default_text' => in_array('default_text', $tv) ? $tv['default_text'] : NULL,
+                    ), '', true, true);
+                    $tvs[$i]->save();
+                }
             }
         }
         return $this;
