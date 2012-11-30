@@ -6,7 +6,7 @@
  *
  * @author      Andrew Smith
  * @link        http://www.silentworks.co.uk
- * @version     1.0.1
+ * @version     1.0.3
  */
 class Setup {
 
@@ -124,25 +124,31 @@ class Setup {
      * @param bool $save
      * @return mixed
      */
-    public function createMenu($text = '', $description = '', $parent = 'components', $save = false)
+    public function createMenu($text = '', $description = '', $parent = 'components', array $extraParams = array(), $save = false)
     {
         $cm = $this->modx->getCount('modMenu', array(
             'text' => $text
         ));
 
+        $options = array(
+            'text' => $text,
+            'parent' => $parent,
+            'description' => $description,
+            'icon' => '',
+            'menuindex' => 0,
+            'params' => '',
+            'handler' => '',
+        );
+
+        if (!empty($extraParams)) {
+            $options = array_merge($options, $extraParams);
+        }
+
         if (!empty($cm)) {
             $this->log(sprintf('Menu already exist with the name %s', $text));
         } else {
             $menu = $this->modx->newObject('modMenu');
-            $menu->fromArray(array(
-                'text' => $text,
-                'parent' => $parent,
-                'description' => $description,
-                'icon' => '',
-                'menuindex' => 0,
-                'params' => '',
-                'handler' => '',
-            ),'',true,true);
+            $menu->fromArray($options,'',true,true);
 
             if ($save) {
                 $menu->save();
