@@ -6,7 +6,7 @@
  *
  * @author      Andrew Smith
  * @link        http://www.silentworks.co.uk
- * @version     1.0.3
+ * @version     1.0.4
  */
 class Setup {
 
@@ -26,7 +26,7 @@ class Setup {
      * @param array $config
      * @return Setup
      */
-    public static function factory(modX $modx, $namespace, array $config = array())
+    public static function factory(modX $modx, $namespace = '', array $config = array())
     {
         return new self($modx, $namespace, $config);
     }
@@ -36,11 +36,11 @@ class Setup {
      * @param $namespace
      * @param $config
      */
-    public function __construct($modx, $namespace, $config)
+    public function __construct($modx, $namespace = '', $config)
     {
         $this->namespace = $namespace;
         $this->modx = $modx;
-        if (! empty($config)) {
+        if (! empty($config) && is_array($config)) {
             $this->config = array_merge($this->config, $config);
         }
     }
@@ -167,25 +167,44 @@ class Setup {
         $i = 0;
 
         if (is_array($snippet)) {
-            foreach ($snippet as $sn => $desc) {
+            foreach ($snippet as $k => $opts) {
                 $i++;
-                $filename = strtolower($sn);
+                $filename = strtolower($k);
                 $file = $this->config['snippets'] . 'snippet.' . $filename . '.php';
+
+                if (file_exists($file)) {
+                    $content = $this->getFileContent($file);
+                } else {
+                    $content = $opts['content'];
+                }
 
                 /* Count Item */
                 $cnt = $this->modx->getCount('modSnippet', array(
-                    'name' => $sn
+                    'name' => $k
                 ));
 
                 if (!empty($cnt)) {
-                    $this->log(sprintf('Snippet already exist with the name %s', $sn));
+                    $this->log(sprintf('Snippet already exist with the name %s', $k));
                 } else {
+                    if (! is_array($opts)) {
+                        $opts = array('desc' => $opts);
+                    }
+
+                    $options = array(
+                        'name' => $k,
+                        'description' => $opts['desc'],
+                        'snippet' => $content,
+                    );
+
+                    if (in_array('static', $opts)) {
+                        $options = array_merge($options, array(
+                            'static' => $opts['static'],
+                            'static_file' => str_replace(MODX_ROOT, '', $file),
+                        ));
+                    }
+
                     $snippets[$i] = $this->modx->newObject('modSnippet');
-                    $snippets[$i]->fromArray(array(
-                        'name' => $sn,
-                        'description' => $desc,
-                        'snippet' => $this->getFileContent($file),
-                    ), '', true, true);
+                    $snippets[$i]->fromArray($options, '', true, true);
                     $snippets[$i]->save();
                 }
             }
@@ -203,25 +222,44 @@ class Setup {
         $i = 0;
 
         if (is_array($chunk)) {
-            foreach ($chunk as $ch => $desc) {
+            foreach ($chunk as $k => $opts) {
                 $i++;
-                $filename = strtolower($ch);
+                $filename = strtolower($k);
                 $file = $this->config['chunks'] . $filename . '.chunk.tpl';
+
+                if (file_exists($file)) {
+                    $content = $this->getFileContent($file, false);
+                } else {
+                    $content = $opts['content'];
+                }
 
                 /* Count Item */
                 $cnt = $this->modx->getCount('modChunk', array(
-                    'name' => $ch
+                    'name' => $k
                 ));
 
                 if (!empty($cnt)) {
-                    $this->log(sprintf('Chunk already exist with the name %s', $ch));
+                    $this->log(sprintf('Chunk already exist with the name %s', $k));
                 } else {
+                    if (! is_array($opts)) {
+                        $opts = array('desc' => $opts);
+                    }
+
+                    $options = array(
+                        'name' => $k,
+                        'description' => $opts['desc'],
+                        'snippet' => $content,
+                    );
+
+                    if (in_array('static', $opts)) {
+                        $options = array_merge($options, array(
+                            'static' => $opts['static'],
+                            'static_file' => str_replace(MODX_ROOT, '', $file),
+                        ));
+                    }
+
                     $chunks[$i] = $this->modx->newObject('modChunk');
-                    $chunks[$i]->fromArray(array(
-                        'name' => $ch,
-                        'description' => $desc,
-                        'snippet' => $this->getFileContent($file, false),
-                    ), '', true, true);
+                    $chunks[$i]->fromArray($options, '', true, true);
                     $chunks[$i]->save();
                 }
             }
@@ -239,10 +277,17 @@ class Setup {
         $i = 0;
 
         if (is_array($plugin)) {
-            foreach ($plugin as $k => $pl) {
+            foreach ($plugin as $k => $opts) {
                 $i++;
                 $filename = strtolower($k);
                 $file = $this->config['plugins'] . 'plugin.' . $filename . '.php';
+
+                // Check if file exist otherwise pass as string
+                if (file_exists($file)) {
+                    $content = $this->getFileContent($file);
+                } else {
+                    $content = $opts['content'];
+                }
 
                 /* Count Item */
                 $cnt = $this->modx->getCount('modPlugin', array(
@@ -252,15 +297,28 @@ class Setup {
                 if (!empty($cnt)) {
                     $this->log(sprintf('Plugin already exist with the name %s', $ch));
                 } else {
-                    $plugins[$i] = $this->modx->newObject('modPlugin');
-                    $plugins[$i]->fromArray(array(
+                    if (! is_array($opts)) {
+                        $opts = array('desc' => $opts);
+                    }
+
+                    $options = array(
                         'name' => $k,
-                        'description' => $pl['desc'],
-                        'plugincode' => $this->getFileContent($file),
-                    ), '', true, true);
+                        'description' => $opts['desc'],
+                        'plugincode' => $content,
+                    );
+
+                    if (in_array('static', $opts)) {
+                        $options = array_merge($options, array(
+                            'static' => $opts['static'],
+                            'static_file' => str_replace(MODX_ROOT, '', $file),
+                        ));
+                    }
+
+                    $plugins[$i] = $this->modx->newObject('modPlugin');
+                    $plugins[$i]->fromArray($options, '', true, true);
 
                     $events = array();
-                    foreach ($pl['events'] as $event) {
+                    foreach ($opts['events'] as $event) {
                         $events[$event] = $this->modx->newObject('modPluginEvent');
                         $events[$event]->fromArray(array(
                             'event' => $event,
